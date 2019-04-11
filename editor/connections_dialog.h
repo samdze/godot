@@ -38,6 +38,7 @@
 #include "core/undo_redo.h"
 #include "editor/editor_inspector.h"
 #include "editor/scene_tree_editor.h"
+#include "editor/property_selector.h"
 #include "scene/gui/button.h"
 #include "scene/gui/check_button.h"
 #include "scene/gui/dialogs.h"
@@ -62,6 +63,7 @@ class ConnectDialog : public ConfirmationDialog {
 
 	SceneTreeEditor *tree;
 	ConfirmationDialog *error;
+	PropertySelectorContainer *property_selector;
 	EditorInspector *bind_editor;
 	OptionButton *type_list;
 	CheckButton *deferred;
@@ -73,6 +75,7 @@ class ConnectDialog : public ConfirmationDialog {
 	void _tree_node_selected();
 	void _add_bind();
 	void _remove_bind();
+	void _method_selected(String p_method);
 
 protected:
 	void _notification(int p_what);

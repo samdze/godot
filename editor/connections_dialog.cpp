@@ -133,6 +133,8 @@ void ConnectDialog::_tree_node_selected() {
 		make_callback->show();
 
 	dst_path->set_text(source->get_path_to(current));
+
+	property_selector->select_method_from_instance(current);
 }
 
 /*
@@ -154,12 +156,25 @@ void ConnectDialog::_add_bind() {
 		case Variant::VECTOR2: value = Vector2(); break;
 		case Variant::RECT2: value = Rect2(); break;
 		case Variant::VECTOR3: value = Vector3(); break;
+		case Variant::TRANSFORM2D: value = Transform2D(); break;
 		case Variant::PLANE: value = Plane(); break;
 		case Variant::QUAT: value = Quat(); break;
 		case Variant::AABB: value = AABB(); break;
 		case Variant::BASIS: value = Basis(); break;
 		case Variant::TRANSFORM: value = Transform(); break;
 		case Variant::COLOR: value = Color(); break;
+		case Variant::NODE_PATH: value = NodePath(); break;
+		case Variant::_RID: value = RID(); break;
+		case Variant::OBJECT: value = memnew(Reference); break;
+		case Variant::DICTIONARY: value = Dictionary(); break;
+		case Variant::ARRAY: value = Array(); break;
+		case Variant::POOL_BYTE_ARRAY: value = PoolByteArray(); break;
+		case Variant::POOL_INT_ARRAY: value = PoolIntArray(); break;
+		case Variant::POOL_REAL_ARRAY: value = PoolRealArray(); break;
+		case Variant::POOL_STRING_ARRAY: value = PoolStringArray(); break;
+		case Variant::POOL_VECTOR2_ARRAY: value = PoolVector2Array(); break;
+		case Variant::POOL_VECTOR3_ARRAY: value = PoolVector3Array(); break;
+		case Variant::POOL_COLOR_ARRAY: value = PoolColorArray(); break;
 		default: { ERR_FAIL(); } break;
 	}
 
@@ -184,6 +199,11 @@ void ConnectDialog::_remove_bind() {
 	cdbinds->notify_changed();
 }
 
+void ConnectDialog::_method_selected(String p_method) {
+	
+	set_dst_method(p_method);
+}
+
 void ConnectDialog::_notification(int p_what) {
 
 	if (p_what == NOTIFICATION_ENTER_TREE) {
@@ -197,6 +217,7 @@ void ConnectDialog::_bind_methods() {
 	ClassDB::bind_method("_tree_node_selected", &ConnectDialog::_tree_node_selected);
 	ClassDB::bind_method("_add_bind", &ConnectDialog::_add_bind);
 	ClassDB::bind_method("_remove_bind", &ConnectDialog::_remove_bind);
+	ClassDB::bind_method("_method_selected", &ConnectDialog::_method_selected);
 
 	ADD_SIGNAL(MethodInfo("connected"));
 }
@@ -302,8 +323,23 @@ ConnectDialog::ConnectDialog() {
 	tree = memnew(SceneTreeEditor(false));
 	tree->get_scene_tree()->connect("item_activated", this, "_ok");
 	tree->connect("node_selected", this, "_tree_node_selected");
+	tree->set_show_enabled_subscene(true);
 
 	vbc_left->add_margin_child(TTR("Connect To Node:"), tree, true);
+
+
+
+	VBoxContainer *vbc_center = memnew(VBoxContainer);
+	main_hb->add_child(vbc_center);
+	vbc_center->set_h_size_flags(SIZE_EXPAND_FILL);
+
+	property_selector = memnew(PropertySelectorContainer);
+	property_selector->connect("request_hide", this, "_closed");
+	property_selector->connect("item_activated", this, "_method_selected");
+
+	vbc_center->add_margin_child(TTR("Select Method:"), property_selector, true);
+
+
 
 	VBoxContainer *vbc_right = memnew(VBoxContainer);
 	main_hb->add_child(vbc_right);
@@ -321,12 +357,26 @@ ConnectDialog::ConnectDialog() {
 	type_list->add_item("Vector2", Variant::VECTOR2);
 	type_list->add_item("Rect2", Variant::RECT2);
 	type_list->add_item("Vector3", Variant::VECTOR3);
+	type_list->add_item("Transform2D", Variant::TRANSFORM2D);
 	type_list->add_item("Plane", Variant::PLANE);
 	type_list->add_item("Quat", Variant::QUAT);
 	type_list->add_item("AABB", Variant::AABB);
 	type_list->add_item("Basis", Variant::BASIS);
 	type_list->add_item("Transform", Variant::TRANSFORM);
 	type_list->add_item("Color", Variant::COLOR);
+	type_list->add_item("NodePath", Variant::NODE_PATH);
+	type_list->add_item("RID", Variant::_RID);
+	type_list->add_item("Object", Variant::OBJECT);
+	type_list->add_item("Dictionary", Variant::DICTIONARY);
+	type_list->add_item("Array", Variant::ARRAY);
+	type_list->add_item("PoolByteArray", Variant::POOL_BYTE_ARRAY);
+	type_list->add_item("PoolIntArray", Variant::POOL_INT_ARRAY);
+	type_list->add_item("PoolRealArray", Variant::POOL_REAL_ARRAY);
+	type_list->add_item("PoolStringArray", Variant::POOL_STRING_ARRAY);
+	type_list->add_item("PoolVector2Array", Variant::POOL_VECTOR2_ARRAY);
+	type_list->add_item("PoolVector3Array", Variant::POOL_VECTOR3_ARRAY);
+	type_list->add_item("PoolColorArray", Variant::POOL_COLOR_ARRAY);
+
 	type_list->select(0);
 
 	Button *add_bind = memnew(Button);

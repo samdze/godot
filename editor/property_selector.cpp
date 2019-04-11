@@ -34,12 +34,12 @@
 #include "editor/editor_node.h"
 #include "editor_scale.h"
 
-void PropertySelector::_text_changed(const String &p_newtext) {
+void PropertySelectorContainer::_text_changed(const String &p_newtext) {
 
 	_update_search();
 }
 
-void PropertySelector::_sbox_input(const Ref<InputEvent> &p_ie) {
+void PropertySelectorContainer::_sbox_input(const Ref<InputEvent> &p_ie) {
 
 	Ref<InputEventKey> k = p_ie;
 
@@ -73,14 +73,7 @@ void PropertySelector::_sbox_input(const Ref<InputEvent> &p_ie) {
 	}
 }
 
-void PropertySelector::_update_search() {
-
-	if (properties)
-		set_title(TTR("Select Property"));
-	else if (virtuals_only)
-		set_title(TTR("Select Virtual Method"));
-	else
-		set_title(TTR("Select Method"));
+void PropertySelectorContainer::_update_search() {
 
 	search_options->clear();
 	help_bit->set_text("");
@@ -314,20 +307,18 @@ void PropertySelector::_update_search() {
 			memdelete(category); //old category was unused
 		}
 	}
-
-	get_ok()->set_disabled(root->get_children() == NULL);
 }
 
-void PropertySelector::_confirmed() {
+void PropertySelectorContainer::_item_activated() {
 
 	TreeItem *ti = search_options->get_selected();
 	if (!ti)
 		return;
-	emit_signal("selected", ti->get_metadata(0));
-	hide();
+
+	emit_signal("item_activated", ti->get_metadata(0));
 }
 
-void PropertySelector::_item_selected() {
+void PropertySelectorContainer::_item_selected() {
 
 	help_bit->set_text("");
 
@@ -387,19 +378,28 @@ void PropertySelector::_item_selected() {
 		return;
 
 	help_bit->set_text(text);
+
+	emit_signal("item_selected", name);
 }
 
-void PropertySelector::_notification(int p_what) {
-
-	if (p_what == NOTIFICATION_ENTER_TREE) {
-
-		connect("confirmed", this, "_confirmed");
-	} else if (p_what == NOTIFICATION_EXIT_TREE) {
-		disconnect("confirmed", this, "_confirmed");
-	}
+void PropertySelectorContainer::_request_hide() {
+	
+	emit_signal("request_hide");
 }
 
-void PropertySelector::select_method_from_base_type(const String &p_base, const String &p_current, bool p_virtuals_only) {
+LineEdit *PropertySelectorContainer::get_search_box() {
+	return search_box;
+}
+
+Tree *PropertySelectorContainer::get_search_options() {
+	return search_options;
+}
+
+EditorHelpBit *PropertySelectorContainer::get_help_bit() {
+	return help_bit;
+}
+
+void PropertySelectorContainer::select_method_from_base_type(const String &p_base, const String &p_current, bool p_virtuals_only) {
 
 	base_type = p_base;
 	selected = p_current;
@@ -409,13 +409,12 @@ void PropertySelector::select_method_from_base_type(const String &p_base, const 
 	instance = NULL;
 	virtuals_only = p_virtuals_only;
 
-	popup_centered_ratio(0.6);
 	search_box->set_text("");
 	search_box->grab_focus();
 	_update_search();
 }
 
-void PropertySelector::select_method_from_script(const Ref<Script> &p_script, const String &p_current) {
+void PropertySelectorContainer::select_method_from_script(const Ref<Script> &p_script, const String &p_current) {
 
 	ERR_FAIL_COND(p_script.is_null());
 	base_type = p_script->get_instance_base_type();
@@ -426,12 +425,11 @@ void PropertySelector::select_method_from_script(const Ref<Script> &p_script, co
 	instance = NULL;
 	virtuals_only = false;
 
-	popup_centered_ratio(0.6);
 	search_box->set_text("");
 	search_box->grab_focus();
 	_update_search();
 }
-void PropertySelector::select_method_from_basic_type(Variant::Type p_type, const String &p_current) {
+void PropertySelectorContainer::select_method_from_basic_type(Variant::Type p_type, const String &p_current) {
 
 	ERR_FAIL_COND(p_type == Variant::NIL);
 	base_type = "";
@@ -442,13 +440,12 @@ void PropertySelector::select_method_from_basic_type(Variant::Type p_type, const
 	instance = NULL;
 	virtuals_only = false;
 
-	popup_centered_ratio(0.6);
 	search_box->set_text("");
 	search_box->grab_focus();
 	_update_search();
 }
 
-void PropertySelector::select_method_from_instance(Object *p_instance, const String &p_current) {
+void PropertySelectorContainer::select_method_from_instance(Object *p_instance, const String &p_current) {
 
 	base_type = p_instance->get_class();
 	selected = p_current;
@@ -463,13 +460,12 @@ void PropertySelector::select_method_from_instance(Object *p_instance, const Str
 	instance = NULL;
 	virtuals_only = false;
 
-	popup_centered_ratio(0.6);
 	search_box->set_text("");
 	search_box->grab_focus();
 	_update_search();
 }
 
-void PropertySelector::select_property_from_base_type(const String &p_base, const String &p_current) {
+void PropertySelectorContainer::select_property_from_base_type(const String &p_base, const String &p_current) {
 
 	base_type = p_base;
 	selected = p_current;
@@ -479,13 +475,12 @@ void PropertySelector::select_property_from_base_type(const String &p_base, cons
 	instance = NULL;
 	virtuals_only = false;
 
-	popup_centered_ratio(0.6);
 	search_box->set_text("");
 	search_box->grab_focus();
 	_update_search();
 }
 
-void PropertySelector::select_property_from_script(const Ref<Script> &p_script, const String &p_current) {
+void PropertySelectorContainer::select_property_from_script(const Ref<Script> &p_script, const String &p_current) {
 
 	ERR_FAIL_COND(p_script.is_null());
 
@@ -497,13 +492,12 @@ void PropertySelector::select_property_from_script(const Ref<Script> &p_script, 
 	instance = NULL;
 	virtuals_only = false;
 
-	popup_centered_ratio(0.6);
 	search_box->set_text("");
 	search_box->grab_focus();
 	_update_search();
 }
 
-void PropertySelector::select_property_from_basic_type(Variant::Type p_type, const String &p_current) {
+void PropertySelectorContainer::select_property_from_basic_type(Variant::Type p_type, const String &p_current) {
 
 	ERR_FAIL_COND(p_type == Variant::NIL);
 	base_type = "";
@@ -514,13 +508,12 @@ void PropertySelector::select_property_from_basic_type(Variant::Type p_type, con
 	instance = NULL;
 	virtuals_only = false;
 
-	popup_centered_ratio(0.6);
 	search_box->set_text("");
 	search_box->grab_focus();
 	_update_search();
 }
 
-void PropertySelector::select_property_from_instance(Object *p_instance, const String &p_current) {
+void PropertySelectorContainer::select_property_from_instance(Object *p_instance, const String &p_current) {
 
 	base_type = "";
 	selected = p_current;
@@ -530,48 +523,189 @@ void PropertySelector::select_property_from_instance(Object *p_instance, const S
 	instance = p_instance;
 	virtuals_only = false;
 
-	popup_centered_ratio(0.6);
 	search_box->set_text("");
 	search_box->grab_focus();
 	_update_search();
 }
 
-void PropertySelector::set_type_filter(const Vector<Variant::Type> &p_type_filter) {
+void PropertySelectorContainer::set_type_filter(const Vector<Variant::Type> &p_type_filter) {
+
 	type_filter = p_type_filter;
 }
 
-void PropertySelector::_bind_methods() {
+bool PropertySelectorContainer::is_properties_only() const {
 
-	ClassDB::bind_method(D_METHOD("_text_changed"), &PropertySelector::_text_changed);
-	ClassDB::bind_method(D_METHOD("_confirmed"), &PropertySelector::_confirmed);
-	ClassDB::bind_method(D_METHOD("_sbox_input"), &PropertySelector::_sbox_input);
-	ClassDB::bind_method(D_METHOD("_item_selected"), &PropertySelector::_item_selected);
-
-	ADD_SIGNAL(MethodInfo("selected", PropertyInfo(Variant::STRING, "name")));
+	return properties;
 }
 
-PropertySelector::PropertySelector() {
+bool PropertySelectorContainer::is_virtuals_only() const {
 
-	VBoxContainer *vbc = memnew(VBoxContainer);
-	add_child(vbc);
-	//set_child_rect(vbc);
+	return virtuals_only;
+}
+
+void PropertySelectorContainer::_bind_methods() {
+
+	ClassDB::bind_method(D_METHOD("_text_changed"), &PropertySelectorContainer::_text_changed);
+	ClassDB::bind_method(D_METHOD("_sbox_input"), &PropertySelectorContainer::_sbox_input);
+	ClassDB::bind_method(D_METHOD("_item_selected"), &PropertySelectorContainer::_item_selected);
+	ClassDB::bind_method(D_METHOD("_item_activated"), &PropertySelectorContainer::_item_activated);
+	ClassDB::bind_method(D_METHOD("_request_hide"), &PropertySelectorContainer::_request_hide);
+
+	ADD_SIGNAL(MethodInfo("item_activated", PropertyInfo(Variant::STRING, "name")));
+	ADD_SIGNAL(MethodInfo("item_selected", PropertyInfo(Variant::STRING, "name")));
+	ADD_SIGNAL(MethodInfo("request_hide"));
+}
+
+PropertySelectorContainer::PropertySelectorContainer() {
+
 	search_box = memnew(LineEdit);
-	vbc->add_margin_child(TTR("Search:"), search_box);
+	add_margin_child(TTR("Search:"), search_box);
 	search_box->connect("text_changed", this, "_text_changed");
 	search_box->connect("gui_input", this, "_sbox_input");
 	search_options = memnew(Tree);
-	vbc->add_margin_child(TTR("Matches:"), search_options, true);
-	get_ok()->set_text(TTR("Open"));
-	get_ok()->set_disabled(true);
-	register_text_enter(search_box);
-	set_hide_on_ok(false);
-	search_options->connect("item_activated", this, "_confirmed");
+	add_margin_child(TTR("Matches:"), search_options, true);
+	search_options->connect("item_activated", this, "_item_activated");
 	search_options->connect("cell_selected", this, "_item_selected");
 	search_options->set_hide_root(true);
 	search_options->set_hide_folding(true);
 	virtuals_only = false;
 
 	help_bit = memnew(EditorHelpBit);
-	vbc->add_margin_child(TTR("Description:"), help_bit);
-	help_bit->connect("request_hide", this, "_closed");
+	add_margin_child(TTR("Description:"), help_bit);
+	help_bit->connect("request_hide", this, "_request_hide");
+}
+
+//========================================
+
+void PropertySelector::_update_title() {
+
+	if (selector->is_properties_only())
+		set_title(TTR("Select Property"));
+	else if (selector->is_virtuals_only())
+		set_title(TTR("Select Virtual Method"));
+	else
+		set_title(TTR("Select Method"));
+}
+
+void PropertySelector::_selected(String p_name) {
+
+	_confirmed();
+}
+
+void PropertySelector::_confirmed() {
+
+	TreeItem *ti = selector->get_search_options()->get_selected();
+	if (!ti)
+		return;
+
+	emit_signal("selected", ti->get_metadata(0));
+	hide();
+}
+
+void PropertySelector::_notification(int p_what) {
+
+	if (p_what == NOTIFICATION_ENTER_TREE) {
+
+		connect("confirmed", this, "_confirmed");
+	} else if (p_what == NOTIFICATION_EXIT_TREE) {
+		disconnect("confirmed", this, "_confirmed");
+	}
+}
+
+void PropertySelector::select_method_from_base_type(const String &p_base, const String &p_current, bool p_virtuals_only) {
+
+	selector->select_method_from_base_type(p_base, p_current, p_virtuals_only);
+
+	_update_title();
+	popup_centered_ratio(0.6);
+	get_ok()->set_disabled(selector->get_search_options()->get_root()->get_children() == NULL);
+}
+
+void PropertySelector::select_method_from_script(const Ref<Script> &p_script, const String &p_current) {
+
+	selector->select_method_from_script(p_script, p_current);
+
+	_update_title();
+	popup_centered_ratio(0.6);
+	get_ok()->set_disabled(selector->get_search_options()->get_root()->get_children() == NULL);
+}
+
+void PropertySelector::select_method_from_basic_type(Variant::Type p_type, const String &p_current) {
+
+	selector->select_method_from_basic_type(p_type, p_current);
+
+	_update_title();
+	popup_centered_ratio(0.6);
+	get_ok()->set_disabled(selector->get_search_options()->get_root()->get_children() == NULL);
+}
+
+void PropertySelector::select_method_from_instance(Object *p_instance, const String &p_current) {
+
+	selector->select_method_from_instance(p_instance, p_current);
+
+	_update_title();
+	popup_centered_ratio(0.6);
+	get_ok()->set_disabled(selector->get_search_options()->get_root()->get_children() == NULL);
+}
+
+void PropertySelector::select_property_from_base_type(const String &p_base, const String &p_current) {
+
+	selector->select_property_from_base_type(p_base, p_current);
+
+	_update_title();
+	popup_centered_ratio(0.6);
+	get_ok()->set_disabled(selector->get_search_options()->get_root()->get_children() == NULL);
+}
+
+void PropertySelector::select_property_from_script(const Ref<Script> &p_script, const String &p_current) {
+
+	selector->select_property_from_script(p_script, p_current);
+
+	_update_title();
+	popup_centered_ratio(0.6);
+	get_ok()->set_disabled(selector->get_search_options()->get_root()->get_children() == NULL);
+}
+
+void PropertySelector::select_property_from_basic_type(Variant::Type p_type, const String &p_current) {
+
+	selector->select_property_from_basic_type(p_type, p_current);
+
+	_update_title();
+	popup_centered_ratio(0.6);
+	get_ok()->set_disabled(selector->get_search_options()->get_root()->get_children() == NULL);
+}
+
+void PropertySelector::select_property_from_instance(Object *p_instance, const String &p_current) {
+
+	selector->select_property_from_instance(p_instance, p_current);
+
+	_update_title();
+	popup_centered_ratio(0.6);
+	get_ok()->set_disabled(selector->get_search_options()->get_root()->get_children() == NULL);
+}
+
+void PropertySelector::set_type_filter(const Vector<Variant::Type> &p_type_filter) {
+	selector->set_type_filter(p_type_filter);
+}
+
+void PropertySelector::_bind_methods() {
+
+	ClassDB::bind_method(D_METHOD("_selected"), &PropertySelector::_selected);
+	ClassDB::bind_method(D_METHOD("_confirmed"), &PropertySelector::_confirmed);
+
+	ADD_SIGNAL(MethodInfo("selected", PropertyInfo(Variant::STRING, "name")));
+}
+
+PropertySelector::PropertySelector() {
+
+	selector = memnew(PropertySelectorContainer);
+	add_child(selector);
+	
+	get_ok()->set_text(TTR("Open"));
+	get_ok()->set_disabled(true);
+	register_text_enter(selector->get_search_box());
+	set_hide_on_ok(false);
+
+	selector->connect("item_activated", this, "_selected");
+	selector->connect("request_hide", this, "_closed");
 }
